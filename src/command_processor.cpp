@@ -37,7 +37,7 @@ namespace command_processor
   static constexpr std::uint8_t I2C_MIN_ADDR = 0x08;
   static constexpr std::uint8_t I2C_MAX_ADDR = 0x77;
   static constexpr std::size_t RX_BUFFER_MAX = 0x2000;
-  static constexpr std::size_t PARAM_MAXLEN = 8;
+  static constexpr std::size_t PARAM_MAXLEN = 12;
 
 
   volatile std::size_t _rx_buffer_setpos = 0;
@@ -50,7 +50,7 @@ namespace command_processor
   std::size_t _param_need_count = 1;
   std::size_t _param_resetindex = 0;
   std::size_t _rle_abs = 0;
-
+  std::uint32_t _argb8888 = ~0u;
   std::uint8_t _i2c_addr = I2C_DEFAULT_ADDR;
   lgfx::Panel_ST7789 _panel;
   lgfx::Light_PWM _light;
@@ -117,6 +117,18 @@ namespace command_processor
 // #if DEBUG == 1
 // lgfx::gpio_lo(0);
 // #endif
+  }
+
+  static void IRAM_ATTR update_argb8888(const std::uint8_t* data, std::size_t len)
+  {
+    switch (len)
+    {
+      default: return;
+      case 1: _argb8888 =   0xFF  << 24 | lgfx::convert_to_rgb888((std::uint8_t ) data[0]);                          return;
+      case 2: _argb8888 =   0xFF  << 24 | lgfx::convert_to_rgb888((std::uint16_t)(data[0]<< 8|data[1]));             return;
+      case 3: _argb8888 =   0xFF  << 24 | lgfx::convert_to_rgb888((std::uint32_t)(data[0]<<16|data[1]<<8|data[2]));  return;
+      case 4: _argb8888 = data[0] << 24 | lgfx::convert_to_rgb888((std::uint32_t)(data[1]<<16|data[2]<<8|data[3]));  return;
+    }
   }
 
   static void IRAM_ATTR load_nvs(void)
@@ -258,53 +270,6 @@ namespace command_processor
       _yptr = _ys;
       break;
 
-    case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_8:   _canvas.setColor((std::uint8_t)params[1]);  break;
-    case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_16:  _canvas.setColor((std::uint16_t)(params[2]|params[1]<<8)); break;
-    case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_24:  _canvas.setColor((std::uint32_t)(params[3]|params[2]<<8|params[1]<<16)); break;
-
-    case lgfx::Panel_M5UnitLCD::CMD_RAM_FILL:
-      _canvas.fillRect(_xs, _ys, _xe - _xs + 1, _ye - _ys + 1);
-      _modified = true;
-      break;
-
-    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL:
-    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_8:
-    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_16:
-    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_24:
-      switch (params[0] & 3)
-      {
-        default: break;
-        case 1: _canvas.setColor((std::uint8_t ) params[3]);  break;
-        case 2: _canvas.setColor((std::uint16_t)(params[3]<< 8 | params[4])); break;
-        case 3: _canvas.setColor((std::uint32_t)(params[3]<<16 | params[4]<<8 | params[5])); break;
-      }
-      _xptr = _xs = _xe = params[1];
-      _yptr = _ys = _ye = params[2];
-      _canvas.setWindow(_xs, _ys, _xe, _ye);
-      _canvas.drawPixel(_xs, _ys);
-      _modified = true;
-      break;
-
-    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT:
-    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_8:
-    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_16:
-    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_24:
-      switch (params[0] & 3)
-      {
-        default: break;
-        case 1: _canvas.setColor((std::uint8_t ) params[5]);  break;
-        case 2: _canvas.setColor((std::uint16_t)(params[5]<< 8|params[6])); break;
-        case 3: _canvas.setColor((std::uint32_t)(params[5]<<16|params[6]<<8|params[7])); break;
-      }
-      _xptr = _xs = params[1];
-      _yptr = _ys = params[2];
-      _xe = params[3];
-      _ye = params[4];
-      _canvas.setWindow(_xs, _ys, _xe, _ye);
-      _canvas.fillRect(_xs, _ys, _xe - _xs + 1, _ye - _ys + 1);
-      _modified = true;
-      break;
-
     case lgfx::Panel_M5UnitLCD::CMD_COPYRECT:
       _canvas.copyRect( params[5]
                 , params[6]
@@ -316,31 +281,125 @@ namespace command_processor
       _modified = true;
       break;
 
+    case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_8:
+    case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_16:
+    case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_24:
+    case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_32:
+      update_argb8888(&params[1], params[0] & 7);
+      break;
+
+    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_8:
+    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_16:
+    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_24:
+    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_32:
+      update_argb8888(&params[3], params[0] & 7);
+      // don't break
+    case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL:
+
+      _xptr = _xs = _xe = params[1];
+      _yptr = _ys = _ye = params[2];
+
+      _canvas.setWindow(_xs, _ys, _xe, _ye);
+      if ((_argb8888 >> 24) == 0xFF)
+      {
+        _canvas.drawPixel(_xs, _ys, _argb8888);
+      }
+      else
+      {
+        _canvas.fillRectAlpha(_xs, _ys, 1, 1, _argb8888 >> 24, _argb8888);
+      }
+      _modified = true;
+      break;
+
+    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_8:
+    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_16:
+    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_24:
+    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_32:
+      update_argb8888(&params[5], params[0] & 7);
+      // don't break
+    case lgfx::Panel_M5UnitLCD::CMD_FILLRECT:
+
+      _xptr = _xs = params[1];
+      _yptr = _ys = params[2];
+      _xe = params[3];
+      _ye = params[4];
+
+    case lgfx::Panel_M5UnitLCD::CMD_RAM_FILL:
+
+      _canvas.setWindow(_xs, _ys, _xe, _ye);
+      if ((_argb8888 >> 24) == 0xFF)
+      {
+        _canvas.fillRect(_xs, _ys, _xe - _xs + 1, _ye - _ys + 1, _argb8888);
+      }
+      else
+      {
+        _canvas.fillRectAlpha(_xs, _ys, _xe - _xs + 1, _ye - _ys + 1, _argb8888 >> 24, _argb8888);
+      }
+      _modified = true;
+      break;
+
     case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_8:
-      _canvas.writeColor((std::uint8_t)params[1], 1);
-      _modified = true;
-      break;
     case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_16:
-      _canvas.writeColor((std::uint16_t)params[1] << 8 | params[2], 1);
-      _modified = true;
-      break;
     case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_24:
-      _canvas.writeColor((std::uint32_t)params[1] << 16 | params[2] << 8 | params[3], 1);
+    case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_32:
+      update_argb8888(&params[1], params[0] & 7);
+      {
+        std::uint8_t alpha = _argb8888 >> 24;
+        if (alpha == 0xFF)
+        {
+          _canvas.fillRect(_xptr, _yptr, 1, 1, _argb8888);
+        }
+        else
+        {
+          _canvas.fillRectAlpha(_xptr, _yptr, 1, 1, alpha, _argb8888);
+        }
+        if (++_xptr > _xe)
+        {
+          _xptr = _xs;
+          if (++_yptr > _ye)
+          {
+            _yptr = _ys;
+          }
+        }
+      }
       _modified = true;
       break;
 
     case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_8:
-      _canvas.writeColor((std::uint8_t)params[2], params[1]);
-      _modified = true;
-      break;
-
     case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_16:
-      _canvas.writeColor((std::uint16_t)(params[2] << 8 | params[3]), params[1]);
-      _modified = true;
-      break;
-
     case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_24:
-      _canvas.writeColor((std::uint32_t)(params[2] << 16 | params[3] << 8 | params[4]), params[1]);
+    case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_32:
+      update_argb8888(&params[2], params[0] & 7);
+      {
+        std::size_t length = params[1];
+        std::uint8_t alpha = _argb8888 >> 24;
+        std::uint_fast16_t xptr = _xptr;
+        std::uint_fast16_t yptr = _yptr;
+        do
+        {
+          auto len = std::min<std::uint32_t>(length, _xe + 1 - xptr);
+          if (alpha == 0xFF)
+          {
+            _canvas.fillRect(xptr, yptr, len, 1, _argb8888);
+          }
+          else
+          {
+            _canvas.fillRectAlpha(xptr, yptr, len, 1, alpha, _argb8888);
+          }
+          xptr += len;
+          if (xptr > _xe)
+          {
+            xptr = _xs;
+            if (++yptr > _ye)
+            {
+              yptr = _ys;
+            }
+            _yptr = yptr;
+          }
+          length -= len;
+        } while (length);
+        _xptr = xptr;
+      }
       _modified = true;
       break;
 
@@ -554,7 +613,6 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
         _param_need_count = 1;
         break;
 
-      case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_8:
       case lgfx::Panel_M5UnitLCD::CMD_BRIGHTNESS:
       case lgfx::Panel_M5UnitLCD::CMD_ROTATE:
       case lgfx::Panel_M5UnitLCD::CMD_SET_POWER:
@@ -562,7 +620,6 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
         _param_need_count = 2;
         return false;
 
-      case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_16:
       case lgfx::Panel_M5UnitLCD::CMD_CASET:
       case lgfx::Panel_M5UnitLCD::CMD_RASET:
         _param_need_count = 3;
@@ -570,9 +627,15 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
 
       case lgfx::Panel_M5UnitLCD::CMD_RESET:
       case lgfx::Panel_M5UnitLCD::CMD_CHANGE_ADDR:
-      case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_24:
       case lgfx::Panel_M5UnitLCD::CMD_UPDATE_END:
         _param_need_count = 4;
+        return false;
+
+      case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_8:
+      case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_16:
+      case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_24:
+      case lgfx::Panel_M5UnitLCD::CMD_SET_COLOR_32:
+        _param_need_count = 1 + (value & 7);
         return false;
 
       case lgfx::Panel_M5UnitLCD::CMD_COPYRECT:
@@ -583,27 +646,31 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_8:
       case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_16:
       case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_24:
-        _param_need_count = 3 + (value & 3);
+      case lgfx::Panel_M5UnitLCD::CMD_DRAWPIXEL_32:
+        _param_need_count = 3 + (value & 7);
         return false;
 
       case lgfx::Panel_M5UnitLCD::CMD_FILLRECT:
       case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_8:
       case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_16:
       case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_24:
-        _param_need_count = 5 + (value & 3);
+      case lgfx::Panel_M5UnitLCD::CMD_FILLRECT_32:
+        _param_need_count = 5 + (value & 7);
         return false;
 
       case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_8:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_16:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_24:
-        _param_need_count = 1 + (value & 3);
+      case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_32:
+        _param_need_count = 1 + (value & 7);
         _param_resetindex = 1;
         return false;
 
       case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_8:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_16:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_24:
-        _param_need_count = 2 + (value & 3);
+      case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_32:
+        _param_need_count = 2 + (value & 7);
         _param_resetindex = 1;
         _rle_abs = 0;
         return false;
@@ -615,7 +682,7 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       }
     }
     else
-    if (_param_index == 3 && (_params[0] & ~3) == lgfx::Panel_M5UnitLCD::CMD_WR_RLE)
+    if (_param_index == 3 && (_params[0] & ~7) == lgfx::Panel_M5UnitLCD::CMD_WR_RLE)
     { // RLEエンコードされたピクセル情報の展開
       if (_rle_abs)
       {
