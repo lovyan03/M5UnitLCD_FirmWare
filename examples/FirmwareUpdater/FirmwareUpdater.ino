@@ -67,7 +67,7 @@ bool update(void)
     return false;
   }
 
-//  delay(50);
+  delay(50);
   data[3] = data[0] = lgfx::Panel_M5UnitLCD::CMD_UPDATE_DATA;
 
   /// セクタブロック単位(4096Byte) でデータ送信を繰り返す

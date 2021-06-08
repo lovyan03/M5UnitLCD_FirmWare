@@ -255,19 +255,31 @@ namespace command_processor
       break;
 
     case lgfx::Panel_M5UnitLCD::CMD_CASET:
-      _xs = std::max<std::uint_fast16_t>(params[1], 0);
-      _xe = std::min<std::uint_fast16_t>(params[2], _canvas.width()-1);
-      _canvas.setWindow(_xs, _ys, _xe, _ye);
-      _xptr = _xs;
-      _yptr = _ys;
+      {
+        std::uint_fast8_t xs = params[1];
+        std::uint_fast8_t xe = params[2];
+        if (xs > xe)
+        {
+          std::swap(xs, xe);
+        }
+        _xe = xe;
+        _xptr = _xs = xs;
+        _yptr = _ys;
+      }
       break;
 
     case lgfx::Panel_M5UnitLCD::CMD_RASET:
-      _ys = std::max<std::uint_fast16_t>(params[1], 0);
-      _ye = std::min<std::uint_fast16_t>(params[2], _canvas.height()-1);
-      _canvas.setWindow(_xs, _ys, _xe, _ye);
-      _xptr = _xs;
-      _yptr = _ys;
+      {
+        std::uint_fast8_t ys = params[1];
+        std::uint_fast8_t ye = params[2];
+        if (ys > ye)
+        {
+          std::swap(ys, ye);
+        }
+        _ye = ye;
+        _yptr = _ys = ys;
+        _xptr = _xs;
+      }
       break;
 
     case lgfx::Panel_M5UnitLCD::CMD_COPYRECT:
@@ -299,7 +311,6 @@ namespace command_processor
       _xptr = _xs = _xe = params[1];
       _yptr = _ys = _ye = params[2];
 
-      _canvas.setWindow(_xs, _ys, _xe, _ye);
       if ((_argb8888 >> 24) == 0xFF)
       {
         _canvas.drawPixel(_xs, _ys, _argb8888);
@@ -318,15 +329,29 @@ namespace command_processor
       update_argb8888(&params[5], params[0] & 7);
       // don't break
     case lgfx::Panel_M5UnitLCD::CMD_FILLRECT:
-
-      _xptr = _xs = params[1];
-      _yptr = _ys = params[2];
-      _xe = params[3];
-      _ye = params[4];
-
+      {
+        std::uint_fast8_t xs = params[1];
+        std::uint_fast8_t xe = params[3];
+        if (xs > xe)
+        {
+          std::swap(xs, xe);
+        }
+        _xs = xs;
+        _xe = xe;
+        std::uint_fast8_t ys = params[2];
+        std::uint_fast8_t ye = params[4];
+        if (ys > ye)
+        {
+          std::swap(ys, ye);
+        }
+        _ys = ys;
+        _ye = ye;
+      }
+      // don't break
     case lgfx::Panel_M5UnitLCD::CMD_RAM_FILL:
+      _xptr = _xs;
+      _yptr = _ys;
 
-      _canvas.setWindow(_xs, _ys, _xe, _ye);
       if ((_argb8888 >> 24) == 0xFF)
       {
         _canvas.fillRect(_xs, _ys, _xe - _xs + 1, _ye - _ys + 1, _argb8888);
@@ -362,36 +387,39 @@ namespace command_processor
           update_argb8888(&params[rle + 1], params[0] & 7);
           alpha = _argb8888 >> 24;
         }
-        std::size_t length = rle ? params[1] : 1;
-        std::uint_fast16_t xptr = _xptr;
-        std::uint_fast16_t yptr = _yptr;
-        do
+        if (_xs <= _xe && _ys <= _ye)
         {
-          auto len = std::min<std::uint32_t>(length, _xe + 1 - xptr);
-          if (alpha)
+          std::size_t length = rle ? params[1] : 1;
+          std::uint_fast16_t xptr = _xptr;
+          std::uint_fast16_t yptr = _yptr;
+          do
           {
-            if (alpha == 0xFF)
+            auto len = std::min<std::uint32_t>(length, _xe + 1 - xptr);
+            if (alpha)
             {
-              _canvas.fillRect(xptr, yptr, len, 1, _argb8888);
+              if (alpha == 0xFF)
+              {
+                _canvas.fillRect(xptr, yptr, len, 1, _argb8888);
+              }
+              else
+              {
+                _canvas.fillRectAlpha(xptr, yptr, len, 1, alpha, _argb8888);
+              }
             }
-            else
+            xptr += len;
+            if (xptr > _xe)
             {
-              _canvas.fillRectAlpha(xptr, yptr, len, 1, alpha, _argb8888);
+              xptr = _xs;
+              if (++yptr > _ye)
+              {
+                yptr = _ys;
+              }
+              _yptr = yptr;
             }
-          }
-          xptr += len;
-          if (xptr > _xe)
-          {
-            xptr = _xs;
-            if (++yptr > _ye)
-            {
-              yptr = _ys;
-            }
-            _yptr = yptr;
-          }
-          length -= len;
-        } while (length);
-        _xptr = xptr;
+            length -= len;
+          } while (length);
+          _xptr = xptr;
+        }
       }
       _modified = true;
       break;
@@ -603,6 +631,19 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       switch (value)
       {
       default:
+        // 未定義のコマンドを受取った場合は通信が切れるまで残りの受信データを全て無視する。
+        _params[0] = lgfx::Panel_M5UnitLCD::CMD_NOP;
+        _param_need_count = PARAM_MAXLEN;
+        _param_resetindex = 1;
+        break;
+
+      case lgfx::Panel_M5UnitLCD::CMD_READ_ID:
+      case lgfx::Panel_M5UnitLCD::CMD_READ_BUFCOUNT:
+      case lgfx::Panel_M5UnitLCD::CMD_INVOFF:
+      case lgfx::Panel_M5UnitLCD::CMD_INVON:
+      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_8:
+      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_16:
+      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_24:
         _param_need_count = 1;
         break;
 
@@ -696,6 +737,8 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       }
     }
 
+
+
     if (_param_index >= _param_need_count)
     {
       i2c_slave::clear_txdata();
@@ -705,7 +748,7 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
         break;
 
       case lgfx::Panel_M5UnitLCD::CMD_NOP:
-        closeData();
+        _param_index = _param_resetindex;
         return false;
 
       case lgfx::Panel_M5UnitLCD::CMD_RESET:
@@ -753,11 +796,6 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
             _firmupdate_result = lgfx::Panel_M5UnitLCD::UPDATE_RESULT_BROKEN;
           }
           prepareTxData();
-          // i2c_slave::clear_txdata();
-          // i2c_slave::add_txdata(_firmupdate_result);
-          // i2c_slave::add_txdata(_firmupdate_result);
-          // i2c_slave::add_txdata(_firmupdate_result);
-          // i2c_slave::add_txdata(_firmupdate_result);
           _firmupdate_state = sector_write;
           closeData();
         }
