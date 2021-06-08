@@ -342,49 +342,42 @@ namespace command_processor
     case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_16:
     case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_24:
     case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_32:
-      update_argb8888(&params[1], params[0] & 7);
-      {
-        std::uint8_t alpha = _argb8888 >> 24;
-        if (alpha == 0xFF)
-        {
-          _canvas.fillRect(_xptr, _yptr, 1, 1, _argb8888);
-        }
-        else
-        {
-          _canvas.fillRectAlpha(_xptr, _yptr, 1, 1, alpha, _argb8888);
-        }
-        if (++_xptr > _xe)
-        {
-          _xptr = _xs;
-          if (++_yptr > _ye)
-          {
-            _yptr = _ys;
-          }
-        }
-      }
-      _modified = true;
-      break;
-
+    case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_A:
     case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_8:
     case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_16:
     case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_24:
     case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_32:
-      update_argb8888(&params[2], params[0] & 7);
+    case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_A:
       {
-        std::size_t length = params[1];
-        std::uint8_t alpha = _argb8888 >> 24;
+        bool rle = (params[0] & ~7) == lgfx::Panel_M5UnitLCD::CMD_WR_RLE;
+        std::uint8_t alpha;
+        if ((params[0] == lgfx::Panel_M5UnitLCD::CMD_WR_RAW_A)
+         || (params[0] == lgfx::Panel_M5UnitLCD::CMD_WR_RLE_A))
+        { // アルファチャネルのみ
+          alpha = params[rle + 1];
+          _argb8888 = (_argb8888 & 0xFFFFFF) | alpha << 24;
+        }
+        else
+        {
+          update_argb8888(&params[rle + 1], params[0] & 7);
+          alpha = _argb8888 >> 24;
+        }
+        std::size_t length = rle ? params[1] : 1;
         std::uint_fast16_t xptr = _xptr;
         std::uint_fast16_t yptr = _yptr;
         do
         {
           auto len = std::min<std::uint32_t>(length, _xe + 1 - xptr);
-          if (alpha == 0xFF)
+          if (alpha)
           {
-            _canvas.fillRect(xptr, yptr, len, 1, _argb8888);
-          }
-          else
-          {
-            _canvas.fillRectAlpha(xptr, yptr, len, 1, alpha, _argb8888);
+            if (alpha == 0xFF)
+            {
+              _canvas.fillRect(xptr, yptr, len, 1, _argb8888);
+            }
+            else
+            {
+              _canvas.fillRectAlpha(xptr, yptr, len, 1, alpha, _argb8888);
+            }
           }
           xptr += len;
           if (xptr > _xe)
@@ -662,7 +655,8 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_16:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_24:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_32:
-        _param_need_count = 1 + (value & 7);
+      case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_A:
+        _param_need_count = 2 + ((value - 1) & 3);
         _param_resetindex = 1;
         return false;
 
@@ -670,7 +664,8 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_16:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_24:
       case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_32:
-        _param_need_count = 2 + (value & 7);
+      case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_A:
+        _param_need_count = 3 + ((value - 1) & 3);
         _param_resetindex = 1;
         _rle_abs = 0;
         return false;
