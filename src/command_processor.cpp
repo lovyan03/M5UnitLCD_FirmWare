@@ -363,21 +363,21 @@ namespace command_processor
       _modified = true;
       break;
 
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_8:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_16:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_24:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_32:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_A:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_8:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_16:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_24:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_32:
-    case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_A:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_8:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_16:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_24:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_32:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_A:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_8:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_16:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_24:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_32:
+    case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_A:
       {
-        bool rle = (params[0] & ~7) == lgfx::Panel_M5UnitLCD::CMD_WR_RLE;
+        bool rle = (params[0] & ~7) == lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE;
         std::uint8_t alpha;
-        if ((params[0] == lgfx::Panel_M5UnitLCD::CMD_WR_RAW_A)
-         || (params[0] == lgfx::Panel_M5UnitLCD::CMD_WR_RLE_A))
+        if ((params[0] == lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_A)
+         || (params[0] == lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_A))
         { // アルファチャネルのみ
           alpha = params[rle + 1];
           _argb8888 = (_argb8888 & 0xFFFFFF) | alpha << 24;
@@ -641,9 +641,9 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       case lgfx::Panel_M5UnitLCD::CMD_READ_BUFCOUNT:
       case lgfx::Panel_M5UnitLCD::CMD_INVOFF:
       case lgfx::Panel_M5UnitLCD::CMD_INVON:
-      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_8:
-      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_16:
-      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_24:
+      case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_8:
+      case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_16:
+      case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_24:
         _param_need_count = 1;
         break;
 
@@ -692,20 +692,20 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
         _param_need_count = 5 + (value & 7);
         return false;
 
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_8:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_16:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_24:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_32:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RAW_A:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_8:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_16:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_24:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_32:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RAW_A:
         _param_need_count = 2 + ((value - 1) & 3);
         _param_resetindex = 1;
         return false;
 
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_8:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_16:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_24:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_32:
-      case lgfx::Panel_M5UnitLCD::CMD_WR_RLE_A:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_8:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_16:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_24:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_32:
+      case lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE_A:
         _param_need_count = 3 + ((value - 1) & 3);
         _param_resetindex = 1;
         _rle_abs = 0;
@@ -718,7 +718,7 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       }
     }
     else
-    if (_param_index == 3 && (_params[0] & ~7) == lgfx::Panel_M5UnitLCD::CMD_WR_RLE)
+    if (_param_index == 3 && (_params[0] & ~7) == lgfx::Panel_M5UnitLCD::CMD_WRITE_RLE)
     { // RLEエンコードされたピクセル情報の展開
       if (_rle_abs)
       {
@@ -849,9 +849,9 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
         _read_ye = std::min<std::uint_fast16_t>(_params[2], _canvas.height()-1);
         break;
 
-      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_8:
-      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_16:
-      case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_24:
+      case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_8:
+      case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_16:
+      case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_24:
         _read_xptr = _read_xs;
         _read_yptr = _read_ys;
         prepareTxData();
@@ -923,9 +923,9 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
       }
       break;
 
-    case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_8:
-    case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_16:
-    case lgfx::Panel_M5UnitLCD::CMD_RD_RAW_24:
+    case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_8:
+    case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_16:
+    case lgfx::Panel_M5UnitLCD::CMD_READ_RAW_24:
       for (std::size_t i = 0; i < 8; ++i)
       {
         std::uint32_t res = _canvas.readPixelValue(_read_xptr, _read_yptr);
