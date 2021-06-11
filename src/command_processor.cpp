@@ -774,6 +774,11 @@ memset((std::uint8_t*)_canvas.getBuffer() + bf, 0, RX_BUFFER_MAX - bf + 1);
           _firmupdate_totalsize = _params[4] << 24 | _params[5] << 16 | _params[6] << 8 | _params[7];
           update::begin(_firmupdate_totalsize);
         }
+        else
+        {
+          closeData();
+          return false;
+        }
         break;
 
       /// ファームウェアアップデートのデータ受信コマンド

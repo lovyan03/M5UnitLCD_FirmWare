@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <M5GFX.h>
 #include <M5UnitLCD.h>
+#include <esp_spi_flash.h>
 
 #include "firmware.h"
 

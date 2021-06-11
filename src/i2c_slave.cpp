@@ -29,7 +29,7 @@ namespace i2c_slave
     std::uint32_t addr;   // I2C slave addr
   };
 
-  i2c_obj_t IRAM_ATTR i2c_obj;
+  i2c_obj_t i2c_obj;
 
   bool IRAM_ATTR is_busy(void)
   {
