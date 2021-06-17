@@ -37,22 +37,22 @@
  - WRITE_RAWの代わりにWRITE_RLEを使用すると、ランレングス圧縮された画像データを送信できます。
 
 
-## コマンド一覧  
+## コマンド一覧
 
 ※ 未定義のコマンドはNOP扱いとなります  
 
-| hex|len|   command   | description                            | send params   |
-|:--:|:-:|:------------|:---------------------------------------|:--------------|
+| hex| len|   command   | description                            | send params   |
+|:--:|:--:|:------------|:---------------------------------------|:--------------|
 |0x00|1-∞|NOP          |通信が STOP するまで何もしない          |[0] 0x00<br>[1-∞] 無視される値|
-|0x20| 1 |INVOFF       |色反転を解除                            |[0] 0x20       |
-|0x21| 1 |INVON        |色反転を有効                            |[0] 0x21       |
-|0x22| 2 |BRIGHTNESS   |バックライト輝度設定<br>0:消灯 -  255:全灯|[0] 0x22<br>[1] 明るさ(0-255)|
-|0x23| 7 |COPYRECT     |矩形範囲コピー                          |[0] 0x23<br>[1] コピー元 X_Left<br>[2] コピー元 Y_Top<br>[3] コピー元 X_Right<br>[4] コピー元 Y_Bottom<br>[5] コピー先 X_Left<br>[6] コピー先 Y_Top|
-|0x2A| 3 |CASET        |X方向の範囲選択                         |[0] 0x2A<br>[1] X_Left<br>[2] X_Right|
-|0x2B| 3 |RASET        |Y方向の範囲選択                         |[0] 0x2B<br>[1] Y_Top<br>[2] Y_Bottom|
-|0x36| 2 |ROTATE       |描画の向きを設定<br>0:通常 / 1:90° / 2:180° / 3:270°<br>4-7は0-3の上下反転|[0] 0x36<br>[1] 設定値 (0-7)|
-|0x38| 2 |SET_POWER    |動作速度設定(電力消費量設定)<br>0:低速 / 1:通常 / 2:高速|[0] 0x38<br>[1] 設定値 (0-2)|
-|0x39| 2 |SET_SLEEP    |LCDパネル スリープ設定<br>0:スリープ解除 / 1:スリープ開始|[0] 0x39<br>[1] 設定値 (0-1)|
+|0x20|  1 |INVOFF       |色反転を解除                            |[0] 0x20       |
+|0x21|  1 |INVON        |色反転を有効                            |[0] 0x21       |
+|0x22|  2 |BRIGHTNESS   |バックライト輝度設定<br>0:消灯 -  255:全灯|[0] 0x22<br>[1] 明るさ(0-255)|
+|0x23|  7 |COPYRECT     |矩形範囲コピー                          |[0] 0x23<br>[1] コピー元 X_Left<br>[2] コピー元 Y_Top<br>[3] コピー元 X_Right<br>[4] コピー元 Y_Bottom<br>[5] コピー先 X_Left<br>[6] コピー先 Y_Top|
+|0x2A|  3 |CASET        |X方向の範囲選択                         |[0] 0x2A<br>[1] X_Left<br>[2] X_Right|
+|0x2B|  3 |RASET        |Y方向の範囲選択                         |[0] 0x2B<br>[1] Y_Top<br>[2] Y_Bottom|
+|0x36|  2 |ROTATE       |描画の向きを設定<br>0:通常 / 1:90° / 2:180° / 3:270°<br>4-7は0-3の上下反転|[0] 0x36<br>[1] 設定値 (0-7)|
+|0x38|  2 |SET_POWER    |動作速度設定(電力消費量設定)<br>0:低速 / 1:通常 / 2:高速|[0] 0x38<br>[1] 設定値 (0-2)|
+|0x39|  2 |SET_SLEEP    |LCDパネル スリープ設定<br>0:スリープ解除 / 1:スリープ開始|[0] 0x39<br>[1] 設定値 (0-1)|
 |0x41|2-∞|WRITE_RAW_8  |RGB332   の画像描画                     |[0] 0x41<br>[1] RGB332<br>通信STOPまで[1]を繰返し
 |0x42|3-∞|WRITE_RAW_16 |RGB565   の画像描画                     |[0] 0x42<br>[1-2] RGB565<br>通信STOPまで[1-2]を繰返し
 |0x43|4-∞|WRITE_RAW_24 |RGB888   の画像描画                     |[0] 0x43<br>[1-3] RGB888<br>通信STOPまで[1-3]を繰返し
@@ -63,22 +63,22 @@
 |0x4B|5-∞|WRITE_RLE_24 |RGB888   のRLE画像描画                  |[0] 0x4B<br>[1-∞] RLEデータ(別項参照)
 |0x4C|6-∞|WRITE_RLE_32 |ARGB8888 のRLE画像描画                  |[0] 0x4C<br>[1-∞] RLEデータ(別項参照)
 |0x4D|3-∞|WRITE_RLE_A  |A8       のRLE画像描画<br>アルファチャネルのみ送信<br>最後に使用した描画色を利用|[0] 0x4D<br>[1-∞] RLEデータ(別項参照)
-|0x50| 1 |RAM_FILL     |記憶している描画色で選択範囲を塗り潰し  |[0] 0x50       |
-|0x51| 2 |SET_COLOR_8  |描画色をRGB332で指定                    |[0] 0x51<br>[1] RGB332    |
-|0x52| 3 |SET_COLOR_16 |描画色をRGB565で指定                    |[0] 0x52<br>[1-2] RGB565  |
-|0x53| 4 |SET_COLOR_24 |描画色をRGB888で指定                    |[0] 0x53<br>[1-3] RGB888  |
-|0x54| 5 |SET_COLOR_32 |描画色をARGB8888で指定                  |[0] 0x54<br>[1-4] ARGB8888|
-|0x60| 3 |DRAWPIXEL    |ドット描画<br>記憶している描画色を利用  |[0] 0x60<br>[1] X<br>[2] Y<br>
-|0x61| 4 |DRAWPIXEL_8  |ドット描画<br>RGB332の1Byteで描画色指定 |[0] 0x61<br>[1] X<br>[2] Y<br>[3] RGB332
-|0x62| 5 |DRAWPIXEL_16 |ドット描画<br>RGB565の2Byteで描画色指定 |[0] 0x62<br>[1] X<br>[2] Y<br>[3-4] RGB565
-|0x63| 6 |DRAWPIXEL_24 |ドット描画<br>RGB888の3Byteで描画色指定 |[0] 0x63<br>[1] X<br>[2] Y<br>[3-5] RGB888
-|0x64| 7 |DRAWPIXEL_32 |ドット描画<br>ARGB8888の4Byteで描画色指定<br>既存の描画内容と透過合成される|[0] 0x64<br>[1] X<br>[2] Y<br>[3-6] ARGB8888
-|0x68| 5 |FILLRECT     |矩形描画<br>記憶している描画色を利用    |[0] 0x68<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom
-|0x69| 6 |FILLRECT_8   |矩形描画<br>RGB332の1Byteで描画色指定   |[0] 0x69<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5] RGB332
-|0x6A| 7 |FILLRECT_16  |矩形描画<br>RGB565の2Byteで描画色指定   |[0] 0x6A<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5-6] RGB565
-|0x6B| 8 |FILLRECT_24  |矩形描画<br>RGB888の3Byteで描画色指定   |[0] 0x6B<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5-7] RGB888
-|0x6C| 9 |FILLRECT_32  |矩形描画<br>ARGB8888の4Byteで描画色指定<br>既存の描画内容と透過合成される|[0] 0x6C<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5-8] ARGB8888
-|0xA0| 4 |CHANGE_ADDR  |I2Cアドレス変更<br>意図しない実行防止のため、<br>[2]は[1]のビット反転値を指定|[0] 0xA0<br>[1] 新しいI2Cアドレス<br>[2] [1]のビット反転値<br>[3] 0xA0
+|0x50|  1 |RAM_FILL     |記憶している描画色で選択範囲を塗り潰し  |[0] 0x50       |
+|0x51|  2 |SET_COLOR_8  |描画色をRGB332で指定                    |[0] 0x51<br>[1] RGB332    |
+|0x52|  3 |SET_COLOR_16 |描画色をRGB565で指定                    |[0] 0x52<br>[1-2] RGB565  |
+|0x53|  4 |SET_COLOR_24 |描画色をRGB888で指定                    |[0] 0x53<br>[1-3] RGB888  |
+|0x54|  5 |SET_COLOR_32 |描画色をARGB8888で指定                  |[0] 0x54<br>[1-4] ARGB8888|
+|0x60|  3 |DRAWPIXEL    |ドット描画<br>記憶している描画色を利用  |[0] 0x60<br>[1] X<br>[2] Y<br>
+|0x61|  4 |DRAWPIXEL_8  |ドット描画<br>RGB332の1Byteで描画色指定 |[0] 0x61<br>[1] X<br>[2] Y<br>[3] RGB332
+|0x62|  5 |DRAWPIXEL_16 |ドット描画<br>RGB565の2Byteで描画色指定 |[0] 0x62<br>[1] X<br>[2] Y<br>[3-4] RGB565
+|0x63|  6 |DRAWPIXEL_24 |ドット描画<br>RGB888の3Byteで描画色指定 |[0] 0x63<br>[1] X<br>[2] Y<br>[3-5] RGB888
+|0x64|  7 |DRAWPIXEL_32 |ドット描画<br>ARGB8888の4Byteで描画色指定<br>既存の描画内容と透過合成される|[0] 0x64<br>[1] X<br>[2] Y<br>[3-6] ARGB8888
+|0x68|  5 |FILLRECT     |矩形描画<br>記憶している描画色を利用    |[0] 0x68<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom
+|0x69|  6 |FILLRECT_8   |矩形描画<br>RGB332の1Byteで描画色指定   |[0] 0x69<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5] RGB332
+|0x6A|  7 |FILLRECT_16  |矩形描画<br>RGB565の2Byteで描画色指定   |[0] 0x6A<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5-6] RGB565
+|0x6B|  8 |FILLRECT_24  |矩形描画<br>RGB888の3Byteで描画色指定   |[0] 0x6B<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5-7] RGB888
+|0x6C|  9 |FILLRECT_32  |矩形描画<br>ARGB8888の4Byteで描画色指定<br>既存の描画内容と透過合成される|[0] 0x6C<br>[1] X_Left<br>[2] Y_Top<br>[3] X_Right<br>[4] Y_Bottom<br>[5-8] ARGB8888
+|0xA0|  4 |CHANGE_ADDR  |I2Cアドレス変更<br>意図しない実行防止のため、<br>[2]は[1]のビット反転値を指定|[0] 0xA0<br>[1] 新しいI2Cアドレス<br>[2] [1]のビット反転値<br>[3] 0xA0
 
 
 ## コマンド一覧 (受信系コマンド)
@@ -98,16 +98,17 @@
 
 |index| hex | description             |
 |:---:|:---:|:------------------------|
-|  0  |0x6A |矩形塗潰コマンド(RGB565) |
-|  1  |0x10 |X 左端                   |
-|  2  |0x20 |Y 上端                   |
-|  3  |0x1F |X 右端                   |
-|  4  |0x2F |Y 下端                   |
-|  5  |0xF8 |色データ(RRRRRGGG)       |
-|  6  |0x00 |色データ(GGGBBBBB)       |
+|  0  |0x6A |矩形塗潰コマンドRGB565   |
+|  1  |0x10 |X 左端(16)               |
+|  2  |0x20 |Y 上端(32)               |
+|  3  |0x1F |X 右端(31)               |
+|  4  |0x2F |Y 下端(47)               |
+|  5  |0xF8 |色データRRRRRGGG(赤色)   |
+|  6  |0x00 |色データGGGBBBBB(赤色)   |
 
-コマンド6Ah は合計7Byteのコマンド列になります。
-送信途中にI2C通信の STOP や RESTART が発生した場合はコマンドは処理されません。一回の送信シーケンスで最後まで中断せず送信する必要があります。
+コマンド6Ah は合計7Byteのコマンド列になります。  
+送信途中にI2C通信の STOP や RESTART が発生した場合はコマンドは処理されません。
+一回の送信シーケンスで最後まで中断せず送信する必要があります。
 
 矩形塗潰しコマンド68h～6Chはいずれも矩形塗潰しができます。
 index1～4までは共通ですが、index5以降 色の指定方法はそれぞれ異なります。

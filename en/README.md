@@ -41,9 +41,9 @@
 
 ※ Undefined commands are treated as NOP.  
 
-| hex|len|   command   | description                            | send params   |
+| hex| len|   command   | description                            | send params   |
 |:--:|:--:|:------------|:---------------------------------------|:--------------|
-|0x00|1-∞|NOP          |Do nothing until communication stops   |[0] 0x00<br>[1-∞] Ignored value|
+|0x00|1-∞|NOP          |Do nothing until communication stops    |[0] 0x00<br>[1-∞] Ignored value|
 |0x20|  1 |INVOFF       |Disable color inversion                 |[0] 0x20       |
 |0x21|  1 |INVON        |Enable color inversion                  |[0] 0x21       |
 |0x22|  2 |BRIGHTNESS   |Backlight brightness setting<br>0:Off - 255:Full lights|[0] 0x22<br>[1] Brightness(0-255)|
@@ -91,21 +91,22 @@
 |0x83| 1 |READ_RAW_24  |Readout of RGB888 image               |[0-2] RGB888<br>Repeat [0-2] until communication STOP.|
 
 
+
 ## Communication example
 
 ##### Example: Use the Fill Rectangle command 0x6A to fill the rectangle range of X16-31 and Y32-47 with red.
 
 |index| hex | description             |
 |:---:|:---:|:------------------------|
-|  0  |0x6A |Fill rectangle (RGB565)  |
+|  0  |0x6A |Fill rectangle RGB565    |
 |  1  |0x10 |X Left                   |
 |  2  |0x20 |Y Top                    |
 |  3  |0x1F |X Right                  |
 |  4  |0x2F |Y Bottom                 |
-|  5  |0xF8 |Color data(RRRRRGGG)     |
-|  6  |0x00 |Color data(GGGBBBBB)     |
+|  5  |0xF8 |Color data RRRRRGGG(red) |
+|  6  |0x00 |Color data GGGBBBBB(red) |
 
-The command 6Ah is a total of 7Byte command sequence.
+The command 6Ah is a total of 7Byte command sequence.  
 If an I2C communication STOP or RESTART occurs during transmission, the command will not be processed.
 It is necessary to transmit without interruption until the end in a single transmission sequence.
 
@@ -146,15 +147,15 @@ Command 6Ch, ARGB8888, allows you to specify an alpha channel (transparency), wh
 |index|  hex | description             |
 |:---:|-----:|:------------------------|
 |  0  |  0x4A|Draw RLE image RGB565    |
-|  1  |  0x07|consecutive number (7pixel)|
-| 2-3 |0xF800|color data (red)         |
-|  4  |  0x00|consecutive number (0pixel)<br>switch to direct mode|
-|  5  |  0x03|consecutive number of direct mode(3pixel)|
-| 6-7 |0x07E0|color data (green)       |
-| 8-9 |0x001F|color data (blue)        |
-|10-11|0xF800|color data (red)         |
-| 12  |  0x04|consecutive number (4pixel)|
-|13-14|0x001F|color data (blue)        |
+|  1  |  0x07|Consecutive number (7pixel)|
+| 2-3 |0xF800|Color data (red)         |
+|  4  |  0x00|Consecutive number (0pixel)<br>switch to direct mode|
+|  5  |  0x03|Consecutive number of direct mode(3pixel)|
+| 6-7 |0x07E0|Color data (green)       |
+| 8-9 |0x001F|Color data (blue)        |
+|10-11|0xF800|Color data (red)         |
+| 12  |  0x04|Consecutive number (4pixel)|
+|13-14|0x001F|Color data (blue)        |
 
 The above example will be handled as follows.
  - index1-3 : Draw 7 pixels of red in RLE mode.
