@@ -1,3 +1,5 @@
+//! Copyright (c) M5Stack. All rights reserved.
+//! Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include <cstdint>
 
@@ -10,4 +12,4 @@ namespace update
   void setBlockCRC32(std::uint32_t crc32);
   bool checkCRC32(void);
   bool end(void);
-};
+}

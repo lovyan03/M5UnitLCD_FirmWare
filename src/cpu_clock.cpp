@@ -1,3 +1,6 @@
+//! Copyright (c) M5Stack. All rights reserved.
+//! Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #include <driver/rtc_io.h>
 #include <soc/rtc.h>
 #include <algorithm>

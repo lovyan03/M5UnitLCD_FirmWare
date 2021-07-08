@@ -1,3 +1,6 @@
+//! Copyright (c) M5Stack. All rights reserved.
+//! Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #include <driver/i2c.h>
 #include <soc/i2c_reg.h>
 #include <soc/i2c_struct.h>
