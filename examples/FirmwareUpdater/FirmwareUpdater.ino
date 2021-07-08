@@ -49,7 +49,6 @@ bool update(void)
   auto bus = (lgfx::Bus_I2C*) panel->getBus();
   auto cfg = bus->config();
 
-  std::size_t index = 0;
   std::uint8_t readbuf[8] = { 0 };
   std::size_t length = sizeof(firmware);
   std::size_t block = (length + SPI_FLASH_SEC_SIZE - 1) / SPI_FLASH_SEC_SIZE;
@@ -156,7 +155,7 @@ bool searchUnitLCD(void)
   {
     if (board == m5gfx::board_t::board_M5StackCore2)
     {
-      lgfx::i2c::registerWrite8( 1 , 0x34 , 0x12, 0x40, ~0x00); // EXTEN enable
+      m5gfx::i2c::writeRegister8( 1 , 0x34 , 0x12, 0x40, ~0x00); // EXTEN enable
     }
     if (display2.init(32, 33)) return true;
   }

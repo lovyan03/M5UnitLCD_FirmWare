@@ -232,17 +232,7 @@ namespace command_processor
       ESP_LOGI(LOGNAME, "CMD SET POWER:%d", params[1]);
       set_power_mode(params[1]);
       break;
-  /*
-    case lgfx::Panel_M5UnitLCD::CMD_DISPLAY_OFF:
-      ESP_LOGI(LOGNAME, "CMD DISPLAY OFF");
-      lcd.setBrightness(0);
-      break;
 
-    case lgfx::Panel_M5UnitLCD::CMD_DISPLAY_ON:
-      ESP_LOGI(LOGNAME, "CMD DISPLAY ON");
-      lcd.setBrightness(brightness);
-      break;
-  //*/
     case lgfx::Panel_M5UnitLCD::CMD_BRIGHTNESS:
       _brightness = params[1];
       _lcd.setBrightness(_brightness);
@@ -503,7 +493,7 @@ namespace command_processor
       auto cfg = _spi_bus.config();
       cfg.spi_host = VSPI_HOST;
       cfg.dma_channel = 2;
-      cfg.freq_write = 80000000;
+      cfg.freq_write = 40000000;
       cfg.freq_read  = 16000000;
       cfg.pin_mosi = 15;
       cfg.pin_miso = 14;
