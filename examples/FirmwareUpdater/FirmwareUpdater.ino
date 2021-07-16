@@ -153,7 +153,7 @@ bool searchUnitLCD(void)
   || board == m5gfx::board_t::board_M5StackCoreInk
     )
   {
-    if (board == lgfx::board_t::board_M5StackCore2)
+    if (board == m5gfx::board_t::board_M5StackCore2)
     {
       m5gfx::i2c::writeRegister8( 1 , 0x34 , 0x12, 0x40, ~0x00); // EXTEN enable
     }
